@@ -30,8 +30,6 @@ tom.isDebug=false
 tom.loaded=false
 tom.PlayerReady=false
 
-
-
 function tom.LoadLocalization(locKey)
 	tom.LocTxt={}
 	if string.upper(locKey)=="DE" then
@@ -188,6 +186,9 @@ function tom.LoadLocalization(locKey)
 			"#1 Nachrichten zur Variablen \"msgdump\" ausgegeben - verlasse das Spiel um dies zu untersuchen. Die Variable wird beim nächsten Eintritt in die Welt zerstört um Speicher zu sparen", -- 150
 			"TOM wird temporär nicht mehr öffnen - auch, wenn Nachrichten auf ALARM gestellt sind (nicht stoeren)",
 			"TOM wird auf normale Alarmbehandlung zurückgestellt",
+			"Window Font",
+			"The font to use for the TOM windows.",
+			"Font Options",
 		}
 	else
 		tom.locTxt={
@@ -343,6 +344,9 @@ function tom.LoadLocalization(locKey)
 			"#1 messages dumped into variable \"msgdump\" - exit the game to investigate. The variable will be destroyed while entering the world next time to save memory", --150
 			"TOM will now temporary stay closed - even, if messages set to ALERT (do not disturb mode)",
 			"TOM returned to normal alert handling",
+			"windows font",
+			"the font to use for the TOM windows",
+			"Font Options",
 		}
 	end
 end
@@ -3407,7 +3411,8 @@ function tom.setFontSize()
 end
 
 function tom.tomFont(style,size)
-	return "EsoUI/Common/Fonts/univers"..tom.to2string(style)..".otf|"..tom.to2string(size).."|soft-shadow-thin"
+	local LMP = LibStub('LibMediaProvider-1.0')
+	return LMP:Fetch("font", tom.vars.windowFont).."|"..tom.to2string(size).."|soft-shadow-thin"
 end
 
 function tom.translateFirstDigit(fIndex,fTable)
@@ -3454,401 +3459,422 @@ end
 
 function tom.InitializeOptions()
 	-- Das Einstellungsfenster aufbauen - LibAddonMenu Version 2.0
-	local panelData = {
-				type = "panel",
-				name = "TOM",
-				displayName = "|c00B5FF" .. "Tamriel Online Messenger" .. "|r",
-				author = tom.authorAccount,
-				version = tom.version,
-				registerForRefresh = true,
-				registerForDefaults = true}
-	local optionsData={
-			[1]={
-				type="header",
-				name=tom.locTxt[4],
+	local LAM = LibStub('LibAddonMenu-2.0')
+	if LAM then
+		local LMP = LibStub('LibMediaProvider-1.0')
+		if LMP then
+			local panelData = {
+					type = "panel",
+					name = "TOM",
+					displayName = "|c00B5FF" .. "Tamriel Online Messenger" .. "|r",
+					author = tom.authorAccount,
+					version = tom.version,
+					registerForRefresh = true,
+					registerForDefaults = true
+			}
+			LAM:RegisterAddonPanel('TOMConfig', panelData)
+
+			local optionsData={
+				[1]={
+					type="header",
+					name=tom.locTxt[4],
+					},
+				[2]={
+					type="checkbox",
+					name=tom.locTxt[5],
+					tooltip=tom.locTxt[6],
+					getFunc=function() return tom.vars.openOnAlarm end,
+					setFunc=function(newValue) tom.vars.openOnAlarm=newValue end,
+					default=tom.tom_defaults.openOnAlarm,
+					},
+				[3]={
+					type="checkbox",
+					name=tom.locTxt[136],
+					tooltip=tom.locTxt[137],
+					getFunc=function() return tom.vars.activateAlertgroup end,
+					setFunc=function(newValue) tom.vars.activateAlertgroup=newValue end,
+					default=tom.tom_defaults.activateAlertgroup,
+					},
+				[4] = {
+					type="header",
+					name=tom.locTxt[50],	-- Nachrichtenbehandlung
+					},
+				[5] = {
+					type="dropdown",
+					name=tom.locTxt[51],
+					tooltip=tom.locTxt[52],
+					choices=tom.locTxt[53],
+					getFunc=function() return tom.vars.alrwsp end,
+					setFunc=function(value) tom.vars.alrwsp=value tom.translateSettings() end,
+					default=tom.tom_defaults.alrwsp
+					},
+				[6] = {
+					type="dropdown",
+					name=tom.locTxt[54],
+					tooltip=tom.locTxt[52],
+					choices=tom.locTxt[53],
+					getFunc=function() return tom.vars.alrgrp end,
+					setFunc=function(value) tom.vars.alrgrp=value tom.translateSettings() end,
+					default=tom.tom_defaults.alrgrp
+					},
+				[7] = {
+					type="dropdown",
+					name=tom.locMsg(14,tom.getGuildDefaultName(1)),
+					tooltip=tom.locMsg(52,tom.getGuildDefaultName(1)),
+					choices=tom.locTxt[53],
+					getFunc=function() return tom.vars.alrg[1] end,
+					setFunc=function(value) tom.vars.alrg[1]=value tom.translateSettings() end,
+					default=tom.tom_defaults.alrg[1],
+					reference="tomConfigGuildName101",
+					},
+				[8] = {
+					type="dropdown",
+					name=tom.locMsg(14,tom.getGuildDefaultName(2)),
+					tooltip=tom.locMsg(52,tom.getGuildDefaultName(2)),
+					choices=tom.locTxt[53],
+					getFunc=function() return tom.vars.alrg[2] end,
+					setFunc=function(value) tom.vars.alrg[2]=value tom.translateSettings() end,
+					default=tom.tom_defaults.alrg[2],
+					reference="tomConfigGuildName102",
+					},
+				[9] = {
+					type="dropdown",
+					name=tom.locMsg(14,tom.getGuildDefaultName(3)),
+					tooltip=tom.locMsg(52,tom.getGuildDefaultName(3)),
+					choices=tom.locTxt[53],
+					getFunc=function() return tom.vars.alrg[3] end,
+					setFunc=function(value) tom.vars.alrg[3]=value tom.translateSettings() end,
+					default=tom.tom_defaults.alrg[3],
+					reference="tomConfigGuildName103",
+					},
+				[10] = {
+					type="dropdown",
+					name=tom.locMsg(14,tom.getGuildDefaultName(4)),
+					tooltip=tom.locMsg(52,tom.getGuildDefaultName(4)),
+					choices=tom.locTxt[53],
+					getFunc=function() return tom.vars.alrg[4] end,
+					setFunc=function(value) tom.vars.alrg[4]=value tom.translateSettings() end,
+					default=tom.tom_defaults.alrg[4],
+					reference="tomConfigGuildName104",
+					},
+				[11] = {
+					type="dropdown",
+					name=tom.locMsg(14,tom.getGuildDefaultName(5)),
+					tooltip=tom.locMsg(52,tom.getGuildDefaultName(5)),
+					choices=tom.locTxt[53],
+					getFunc=function() return tom.vars.alrg[5] end,
+					setFunc=function(value) tom.vars.alrg[5]=value tom.translateSettings() end,
+					default=tom.tom_defaults.alrg[5],
+					reference="tomConfigGuildName105",
+					},
+				[12] = {
+					type="dropdown",
+					name=tom.locTxt[56],
+					tooltip=tom.locTxt[52],
+					choices=tom.locTxt[53],
+					getFunc=function() return tom.vars.alrsay end,
+					setFunc=function(value) tom.vars.alrsay=value tom.translateSettings() end,
+					default=tom.tom_defaults.alrsay,
+					},
+				[13] = {
+					type="dropdown",
+					name=tom.locTxt[57],
+					tooltip=tom.locTxt[52],
+					choices=tom.locTxt[53],
+					getFunc=function() return tom.vars.alrzzz end,
+					setFunc=function(value) tom.vars.alrzzz=value tom.translateSettings() end,
+					default=tom.tom_defaults.alrzzz,
+					},
+				[14] = {
+					type="dropdown",
+					name=tom.locTxt[58],
+					tooltip=tom.locTxt[52],
+					choices=tom.locTxt[53],
+					getFunc=function() return tom.vars.alrzde end,
+					setFunc=function(value) tom.vars.alrzde=value tom.translateSettings() end,
+					default=tom.tom_defaults.alrzde,
+					},
+				[15] = {
+					type="dropdown",
+					name=tom.locTxt[59],
+					tooltip=tom.locTxt[52],
+					choices=tom.locTxt[53],
+					getFunc=function() return tom.vars.alrzfr end,
+					setFunc=function(value) tom.vars.alrzfr=value tom.translateSettings() end,
+					default=tom.tom_defaults.alrzfr,
+					},
+				[16] = {
+					type="dropdown",
+					name=tom.locTxt[60],
+					tooltip=tom.locTxt[52],
+					choices=tom.locTxt[53],
+					getFunc=function() return tom.vars.alrzen end,
+					setFunc=function(value) tom.vars.alrzen=value tom.translateSettings() end,
+					default=tom.tom_defaults.alrzen,
+					},
+				[17] = {
+					type="header",
+					name=tom.locTxt[9],	-- Aufbewahrungszeiten
+					},
+				[18] = {
+					type="dropdown",
+					name=tom.locTxt[10],
+					tooltip=tom.locTxt[11],
+					choices=tom.msgRetentionsWhisper,
+					getFunc=function() return tom.vars.mltwsp end,
+					setFunc=function(value) tom.vars.mltwsp=value end,
+					default=tom.tom_defaults.mltwsp,
+					},
+				[19] = {
+					type="dropdown",
+					name=tom.locTxt[12],
+					tooltip=tom.locTxt[13],
+					choices=tom.msgRetentions,
+					getFunc=function() return tom.vars.mltgrp end,
+					setFunc=function(value) tom.vars.mltgrp=value end,
+					default=tom.tom_defaults.mltgrp,
+					},
+				[20] = {
+					type="dropdown",
+					name=tom.locMsg(14,tom.getGuildDefaultName(1)),
+					tooltip=tom.locMsg(15,tom.getGuildDefaultName(1)),
+					choices=tom.msgRetentions,
+					getFunc=function() return tom.vars.mltg[1] end,
+					setFunc=function(value) tom.vars.mltg[1]=value end,
+					default=tom.tom_defaults.mltg[1],
+					reference="tomConfigGuildName201",
+					},
+				[21] = {
+					type="dropdown",
+					name=tom.locMsg(14,tom.getGuildDefaultName(2)),
+					tooltip=tom.locMsg(15,tom.getGuildDefaultName(2)),
+					choices=tom.msgRetentions,
+					getFunc=function() return tom.vars.mltg[2] end,
+					setFunc=function(value) tom.vars.mltg[2]=value end,
+					default=tom.tom_defaults.mltg[2],
+					reference="tomConfigGuildName202",
+					},
+				[22] = {
+					type="dropdown",
+					name=tom.locMsg(14,tom.getGuildDefaultName(3)),
+					tooltip=tom.locMsg(15,tom.getGuildDefaultName(3)),
+					choices=tom.msgRetentions,
+					getFunc=function() return tom.vars.mltg[3] end,
+					setFunc=function(value) tom.vars.mltg[3]=value end,
+					default=tom.tom_defaults.mltg[3],
+					reference="tomConfigGuildName203",
+					},
+				[23] = {
+					type="dropdown",
+					name=tom.locMsg(14,tom.getGuildDefaultName(4)),
+					tooltip=tom.locMsg(15,tom.getGuildDefaultName(4)),
+					choices=tom.msgRetentions,
+					getFunc=function() return tom.vars.mltg[4] end,
+					setFunc=function(value) tom.vars.mltg[4]=value end,
+					default=tom.tom_defaults.mltg[4],
+					reference="tomConfigGuildName204",
+					},
+				[24] = {
+					type="dropdown",
+					name=tom.locMsg(14,tom.getGuildDefaultName(5)),
+					tooltip=tom.locMsg(15,tom.getGuildDefaultName(5)),
+					choices=tom.msgRetentions,
+					getFunc=function() return tom.vars.mltg[5] end,
+					setFunc=function(value) tom.vars.mltg[5]=value end,
+					default=tom.tom_defaults.mltg[5],
+					reference="tomConfigGuildName205",
+					},
+				[25] = {
+					type="dropdown",
+					name=tom.locTxt[16],
+					tooltip=tom.locTxt[17],
+					choices=tom.msgRetentions,
+					getFunc=function() return tom.vars.mltsay end,
+					setFunc=function(value) tom.vars.mltsay=value end,
+					default=tom.tom_defaults.mltsay,
+					},
+				[26] = {
+					type="dropdown",
+					name=tom.locTxt[18],
+					tooltip=tom.locTxt[19],
+					choices=tom.msgRetentions,
+					getFunc=function() return tom.vars.mltzzz end,
+					setFunc=function(value) tom.vars.mltzzz=value end,
+					default=tom.tom_defaults.mltzzz,
+					},
+				[27] = {
+					type="dropdown",
+					name=tom.locTxt[20],
+					tooltip=tom.locTxt[21],
+					choices=tom.msgRetentions,
+					getFunc=function() return tom.vars.mltzde end,
+					setFunc=function(value) tom.vars.mltzde=value end,
+					default=tom.tom_defaults.mltzde,
+					},
+				[28] = {
+					type="dropdown",
+					name=tom.locTxt[22],
+					tooltip=tom.locTxt[23],
+					choices=tom.msgRetentions,
+					getFunc=function() return tom.vars.mltzfr end,
+					setFunc=function(value) tom.vars.mltzfr=value end,
+					default=tom.tom_defaults.mltzfr,
+					},
+				[29] = {
+					type="dropdown",
+					name=tom.locTxt[24],
+					tooltip=tom.locTxt[25],
+					choices=tom.msgRetentions,
+					getFunc=function() return tom.vars.mltzen end,
+					setFunc=function(value) tom.vars.mltzen=value end,
+					default=tom.tom_defaults.mltzen,
+					},
+				[30]={
+					type="header",
+					name=tom.locTxt[47],
+					},
+				[31] = {
+					type="dropdown",
+					name=tom.locTxt[40],
+					tooltip=tom.locTxt[41],
+					choices=tom.locTxt[42],
+					getFunc=function() return tom.vars.displayGuildChars end,
+					setFunc=function(value) tom.vars.displayGuildChars=value tom.translateSettings() end,
+					default=tom.tom_defaults.displayGuildChars
+					},
+				[32] = {
+					type="dropdown",
+					name=tom.locTxt[115],
+					tooltip=tom.locTxt[114],
+					choices=tom.locTxt[113],
+					getFunc=function() return tom.vars.gomMessageNotifier end,
+					setFunc=function(value) tom.vars.gomMessageNotifier=value tom.translateSettings() end,
+					default=tom.tom_defaults.gomMessageNotifier
+					},
+				[33]={
+					type="checkbox",
+					name=tom.locTxt[48],
+					tooltip=tom.locTxt[49],
+					getFunc=function() return tom.vars.use24hours end,
+					setFunc=function(newValue) tom.vars.use24hours=newValue tom.activateUIchanges() end,
+					default=tom.tom_defaults.use24hours,
+					},
+				[34] = {
+					type="slider",
+					name=tom.locTxt[28],
+					tooltip=tom.locTxt[29],
+					min=tom.tom_defaults.gomButtons-2,
+					max=tom.gomMaxButtons,
+					step=1,
+					getFunc=function() return tom.vars.gomButtons end,
+					setFunc=function(value) tom.vars.gomButtons=value tom.activateUIchanges() end,
+					default=tom.tom_defaults.gomButtons,
+					},
+				[35] = {
+					type="slider",
+					name=tom.locTxt[30],
+					tooltip=tom.locTxt[31],
+					min=tom.tom_defaults.chatWidth-200,
+					max=tom.chatMaxWidth,
+					step=50,
+					getFunc=function() return tom.vars.chatWidth end,
+					setFunc=function(value) tom.vars.chatWidth=value tom.activateUIchanges() end,
+					default=tom.tom_defaults.chatWidth,
+					},
+				[36] = {
+					type="slider",
+					name=tom.locTxt[61],
+					tooltip=tom.locTxt[62],
+					min=tom.tom_defaults.undockedHeigth-2,
+					max=tom.gomMaxButtons,
+					step=1,
+					getFunc=function() return tom.vars.undockedHeigth end,
+					setFunc=function(value) tom.vars.undockedHeigth=value tom.activateUIchanges() end,
+					default=tom.tom_defaults.undockedHeigth,
+					},
+				[37] = {
+					type="slider",
+					name=tom.locTxt[63],
+					tooltip=tom.locTxt[64],
+					min=tom.tom_defaults.undockedWidth-200,
+					max=tom.chatMaxWidth,
+					step=50,
+					getFunc=function() return tom.vars.undockedWidth end,
+					setFunc=function(value) tom.vars.undockedWidth=value tom.activateUIchanges() end,
+					default=tom.tom_defaults.undockedWidth,
+					},
+				[38] = {
+					type="slider",
+					name=tom.locTxt[68],
+					tooltip=nil,
+					min=0,
+					max=100,
+					step=5,
+					getFunc=function() return tom.vars.BGalpha end,
+					setFunc=function(value) tom.vars.BGalpha=value tom.activateUIchanges() end,
+					default=tom.tom_defaults.BGalpha,
+					},
+				[39]={
+					type="checkbox",
+					name=tom.locTxt[116],
+					tooltip=tom.locTxt[117],
+					getFunc=function() return tom.vars.displayGreeting end,
+					setFunc=function(newValue) tom.vars.displayGreeting=newValue end,
+					default=tom.tom_defaults.displayGreeting,
+					},
+				[40]={
+					type="checkbox",
+					name=tom.locTxt[7],
+					tooltip=tom.locTxt[8],
+					getFunc=function() return tom.vars.moveableWindows end,
+					setFunc=function(newValue) tom.vars.moveableWindows=newValue tom.setMovability(newValue) end,
+					default=tom.tom_defaults.moveableWindows,
+					},
+				[41]={
+					type="checkbox",
+					name=tom.locTxt[143],
+					tooltip=tom.locTxt[144],
+					getFunc=function() return tom.vars.displayOnlineStatus end,
+					setFunc=function(newValue) tom.vars.displayOnlineStatus=newValue tom.onlineStatusChange(0,0,GetPlayerStatus()) end,
+					default=tom.tom_defaults.displayOnlineStatus,
+					},
+				[42]={
+					type="checkbox",
+					name=tom.locTxt[145],
+					tooltip=tom.locTxt[146],
+					getFunc=function() return tom.vars.alerterShown end,
+					setFunc=function(newValue) tom.vars.alerterShown=newValue tom.setAlerterHideStatus(tom.vars.alerterShown) end,
+					default=tom.tom_defaults.alerterShown,
+					},
+				[43] = {
+					type="header",
+					name=tom.locTxt[155],	-- Aufbewahrungszeiten
+					},
+		        [44] = {
+					type="dropdown",
+					name=tom.locTxt[153],
+					tooltip=tom.locTxt[154],
+					choices=LMP:List(LMP.MediaType.FONT), -- Show fonts from LibMediaProvider-1.0
+					getFunc=function() return tom.vars.windowFont end,
+					setFunc=function(value) tom.vars.windowFont = value 
+					end,
 				},
-			[2]={
-				type="checkbox",
-				name=tom.locTxt[5],
-				tooltip=tom.locTxt[6],
-				getFunc=function() return tom.vars.openOnAlarm end,
-				setFunc=function(newValue) tom.vars.openOnAlarm=newValue end,
-				default=tom.tom_defaults.openOnAlarm,
-				},
-			[3]={
-				type="checkbox",
-				name=tom.locTxt[136],
-				tooltip=tom.locTxt[137],
-				getFunc=function() return tom.vars.activateAlertgroup end,
-				setFunc=function(newValue) tom.vars.activateAlertgroup=newValue end,
-				default=tom.tom_defaults.activateAlertgroup,
-				},
-			[4] = {
-				type="header",
-				name=tom.locTxt[50],	-- Nachrichtenbehandlung
-				},
-			[5] = {
-				type="dropdown",
-				name=tom.locTxt[51],
-				tooltip=tom.locTxt[52],
-				choices=tom.locTxt[53],
-				getFunc=function() return tom.vars.alrwsp end,
-				setFunc=function(value) tom.vars.alrwsp=value tom.translateSettings() end,
-				default=tom.tom_defaults.alrwsp
-				},
-			[6] = {
-				type="dropdown",
-				name=tom.locTxt[54],
-				tooltip=tom.locTxt[52],
-				choices=tom.locTxt[53],
-				getFunc=function() return tom.vars.alrgrp end,
-				setFunc=function(value) tom.vars.alrgrp=value tom.translateSettings() end,
-				default=tom.tom_defaults.alrgrp
-				},
-			[7] = {
-				type="dropdown",
-				name=tom.locMsg(14,tom.getGuildDefaultName(1)),
-				tooltip=tom.locMsg(52,tom.getGuildDefaultName(1)),
-				choices=tom.locTxt[53],
-				getFunc=function() return tom.vars.alrg[1] end,
-				setFunc=function(value) tom.vars.alrg[1]=value tom.translateSettings() end,
-				default=tom.tom_defaults.alrg[1],
-				reference="tomConfigGuildName101",
-				},
-			[8] = {
-				type="dropdown",
-				name=tom.locMsg(14,tom.getGuildDefaultName(2)),
-				tooltip=tom.locMsg(52,tom.getGuildDefaultName(2)),
-				choices=tom.locTxt[53],
-				getFunc=function() return tom.vars.alrg[2] end,
-				setFunc=function(value) tom.vars.alrg[2]=value tom.translateSettings() end,
-				default=tom.tom_defaults.alrg[2],
-				reference="tomConfigGuildName102",
-				},
-			[9] = {
-				type="dropdown",
-				name=tom.locMsg(14,tom.getGuildDefaultName(3)),
-				tooltip=tom.locMsg(52,tom.getGuildDefaultName(3)),
-				choices=tom.locTxt[53],
-				getFunc=function() return tom.vars.alrg[3] end,
-				setFunc=function(value) tom.vars.alrg[3]=value tom.translateSettings() end,
-				default=tom.tom_defaults.alrg[3],
-				reference="tomConfigGuildName103",
-				},
-			[10] = {
-				type="dropdown",
-				name=tom.locMsg(14,tom.getGuildDefaultName(4)),
-				tooltip=tom.locMsg(52,tom.getGuildDefaultName(4)),
-				choices=tom.locTxt[53],
-				getFunc=function() return tom.vars.alrg[4] end,
-				setFunc=function(value) tom.vars.alrg[4]=value tom.translateSettings() end,
-				default=tom.tom_defaults.alrg[4],
-				reference="tomConfigGuildName104",
-				},
-			[11] = {
-				type="dropdown",
-				name=tom.locMsg(14,tom.getGuildDefaultName(5)),
-				tooltip=tom.locMsg(52,tom.getGuildDefaultName(5)),
-				choices=tom.locTxt[53],
-				getFunc=function() return tom.vars.alrg[5] end,
-				setFunc=function(value) tom.vars.alrg[5]=value tom.translateSettings() end,
-				default=tom.tom_defaults.alrg[5],
-				reference="tomConfigGuildName105",
-				},
-			[12] = {
-				type="dropdown",
-				name=tom.locTxt[56],
-				tooltip=tom.locTxt[52],
-				choices=tom.locTxt[53],
-				getFunc=function() return tom.vars.alrsay end,
-				setFunc=function(value) tom.vars.alrsay=value tom.translateSettings() end,
-				default=tom.tom_defaults.alrsay,
-				},
-			[13] = {
-				type="dropdown",
-				name=tom.locTxt[57],
-				tooltip=tom.locTxt[52],
-				choices=tom.locTxt[53],
-				getFunc=function() return tom.vars.alrzzz end,
-				setFunc=function(value) tom.vars.alrzzz=value tom.translateSettings() end,
-				default=tom.tom_defaults.alrzzz,
-				},
-			[14] = {
-				type="dropdown",
-				name=tom.locTxt[58],
-				tooltip=tom.locTxt[52],
-				choices=tom.locTxt[53],
-				getFunc=function() return tom.vars.alrzde end,
-				setFunc=function(value) tom.vars.alrzde=value tom.translateSettings() end,
-				default=tom.tom_defaults.alrzde,
-				},
-			[15] = {
-				type="dropdown",
-				name=tom.locTxt[59],
-				tooltip=tom.locTxt[52],
-				choices=tom.locTxt[53],
-				getFunc=function() return tom.vars.alrzfr end,
-				setFunc=function(value) tom.vars.alrzfr=value tom.translateSettings() end,
-				default=tom.tom_defaults.alrzfr,
-				},
-			[16] = {
-				type="dropdown",
-				name=tom.locTxt[60],
-				tooltip=tom.locTxt[52],
-				choices=tom.locTxt[53],
-				getFunc=function() return tom.vars.alrzen end,
-				setFunc=function(value) tom.vars.alrzen=value tom.translateSettings() end,
-				default=tom.tom_defaults.alrzen,
-				},
-			[17] = {
-				type="header",
-				name=tom.locTxt[9],	-- Aufbewahrungszeiten
-				},
-			[18] = {
-				type="dropdown",
-				name=tom.locTxt[10],
-				tooltip=tom.locTxt[11],
-				choices=tom.msgRetentionsWhisper,
-				getFunc=function() return tom.vars.mltwsp end,
-				setFunc=function(value) tom.vars.mltwsp=value end,
-				default=tom.tom_defaults.mltwsp,
-				},
-			[19] = {
-				type="dropdown",
-				name=tom.locTxt[12],
-				tooltip=tom.locTxt[13],
-				choices=tom.msgRetentions,
-				getFunc=function() return tom.vars.mltgrp end,
-				setFunc=function(value) tom.vars.mltgrp=value end,
-				default=tom.tom_defaults.mltgrp,
-				},
-			[20] = {
-				type="dropdown",
-				name=tom.locMsg(14,tom.getGuildDefaultName(1)),
-				tooltip=tom.locMsg(15,tom.getGuildDefaultName(1)),
-				choices=tom.msgRetentions,
-				getFunc=function() return tom.vars.mltg[1] end,
-				setFunc=function(value) tom.vars.mltg[1]=value end,
-				default=tom.tom_defaults.mltg[1],
-				reference="tomConfigGuildName201",
-				},
-			[21] = {
-				type="dropdown",
-				name=tom.locMsg(14,tom.getGuildDefaultName(2)),
-				tooltip=tom.locMsg(15,tom.getGuildDefaultName(2)),
-				choices=tom.msgRetentions,
-				getFunc=function() return tom.vars.mltg[2] end,
-				setFunc=function(value) tom.vars.mltg[2]=value end,
-				default=tom.tom_defaults.mltg[2],
-				reference="tomConfigGuildName202",
-				},
-			[22] = {
-				type="dropdown",
-				name=tom.locMsg(14,tom.getGuildDefaultName(3)),
-				tooltip=tom.locMsg(15,tom.getGuildDefaultName(3)),
-				choices=tom.msgRetentions,
-				getFunc=function() return tom.vars.mltg[3] end,
-				setFunc=function(value) tom.vars.mltg[3]=value end,
-				default=tom.tom_defaults.mltg[3],
-				reference="tomConfigGuildName203",
-				},
-			[23] = {
-				type="dropdown",
-				name=tom.locMsg(14,tom.getGuildDefaultName(4)),
-				tooltip=tom.locMsg(15,tom.getGuildDefaultName(4)),
-				choices=tom.msgRetentions,
-				getFunc=function() return tom.vars.mltg[4] end,
-				setFunc=function(value) tom.vars.mltg[4]=value end,
-				default=tom.tom_defaults.mltg[4],
-				reference="tomConfigGuildName204",
-				},
-			[24] = {
-				type="dropdown",
-				name=tom.locMsg(14,tom.getGuildDefaultName(5)),
-				tooltip=tom.locMsg(15,tom.getGuildDefaultName(5)),
-				choices=tom.msgRetentions,
-				getFunc=function() return tom.vars.mltg[5] end,
-				setFunc=function(value) tom.vars.mltg[5]=value end,
-				default=tom.tom_defaults.mltg[5],
-				reference="tomConfigGuildName205",
-				},
-			[25] = {
-				type="dropdown",
-				name=tom.locTxt[16],
-				tooltip=tom.locTxt[17],
-				choices=tom.msgRetentions,
-				getFunc=function() return tom.vars.mltsay end,
-				setFunc=function(value) tom.vars.mltsay=value end,
-				default=tom.tom_defaults.mltsay,
-				},
-			[26] = {
-				type="dropdown",
-				name=tom.locTxt[18],
-				tooltip=tom.locTxt[19],
-				choices=tom.msgRetentions,
-				getFunc=function() return tom.vars.mltzzz end,
-				setFunc=function(value) tom.vars.mltzzz=value end,
-				default=tom.tom_defaults.mltzzz,
-				},
-			[27] = {
-				type="dropdown",
-				name=tom.locTxt[20],
-				tooltip=tom.locTxt[21],
-				choices=tom.msgRetentions,
-				getFunc=function() return tom.vars.mltzde end,
-				setFunc=function(value) tom.vars.mltzde=value end,
-				default=tom.tom_defaults.mltzde,
-				},
-			[28] = {
-				type="dropdown",
-				name=tom.locTxt[22],
-				tooltip=tom.locTxt[23],
-				choices=tom.msgRetentions,
-				getFunc=function() return tom.vars.mltzfr end,
-				setFunc=function(value) tom.vars.mltzfr=value end,
-				default=tom.tom_defaults.mltzfr,
-				},
-			[29] = {
-				type="dropdown",
-				name=tom.locTxt[24],
-				tooltip=tom.locTxt[25],
-				choices=tom.msgRetentions,
-				getFunc=function() return tom.vars.mltzen end,
-				setFunc=function(value) tom.vars.mltzen=value end,
-				default=tom.tom_defaults.mltzen,
-				},
-			[30]={
-				type="header",
-				name=tom.locTxt[47],
-				},
-			[31] = {
-				type="dropdown",
-				name=tom.locTxt[40],
-				tooltip=tom.locTxt[41],
-				choices=tom.locTxt[42],
-				getFunc=function() return tom.vars.displayGuildChars end,
-				setFunc=function(value) tom.vars.displayGuildChars=value tom.translateSettings() end,
-				default=tom.tom_defaults.displayGuildChars
-				},
-			[32] = {
-				type="dropdown",
-				name=tom.locTxt[115],
-				tooltip=tom.locTxt[114],
-				choices=tom.locTxt[113],
-				getFunc=function() return tom.vars.gomMessageNotifier end,
-				setFunc=function(value) tom.vars.gomMessageNotifier=value tom.translateSettings() end,
-				default=tom.tom_defaults.gomMessageNotifier
-				},
-			[33]={
-				type="checkbox",
-				name=tom.locTxt[48],
-				tooltip=tom.locTxt[49],
-				getFunc=function() return tom.vars.use24hours end,
-				setFunc=function(newValue) tom.vars.use24hours=newValue tom.activateUIchanges() end,
-				default=tom.tom_defaults.use24hours,
-				},
-			[34] = {
-				type="slider",
-				name=tom.locTxt[28],
-				tooltip=tom.locTxt[29],
-				min=tom.tom_defaults.gomButtons-2,
-				max=tom.gomMaxButtons,
-				step=1,
-				getFunc=function() return tom.vars.gomButtons end,
-				setFunc=function(value) tom.vars.gomButtons=value tom.activateUIchanges() end,
-				default=tom.tom_defaults.gomButtons,
-				},
-			[35] = {
-				type="slider",
-				name=tom.locTxt[30],
-				tooltip=tom.locTxt[31],
-				min=tom.tom_defaults.chatWidth-200,
-				max=tom.chatMaxWidth,
-				step=50,
-				getFunc=function() return tom.vars.chatWidth end,
-				setFunc=function(value) tom.vars.chatWidth=value tom.activateUIchanges() end,
-				default=tom.tom_defaults.chatWidth,
-				},
-			[36] = {
-				type="slider",
-				name=tom.locTxt[61],
-				tooltip=tom.locTxt[62],
-				min=tom.tom_defaults.undockedHeigth-2,
-				max=tom.gomMaxButtons,
-				step=1,
-				getFunc=function() return tom.vars.undockedHeigth end,
-				setFunc=function(value) tom.vars.undockedHeigth=value tom.activateUIchanges() end,
-				default=tom.tom_defaults.undockedHeigth,
-				},
-			[37] = {
-				type="slider",
-				name=tom.locTxt[63],
-				tooltip=tom.locTxt[64],
-				min=tom.tom_defaults.undockedWidth-200,
-				max=tom.chatMaxWidth,
-				step=50,
-				getFunc=function() return tom.vars.undockedWidth end,
-				setFunc=function(value) tom.vars.undockedWidth=value tom.activateUIchanges() end,
-				default=tom.tom_defaults.undockedWidth,
-				},
-			[38] = {
-				type="slider",
-				name=tom.locTxt[148],
-				tooltip=tom.locTxt[149],
-				min=12,
-				max=28,
-				step=1,
-				getFunc=function() return tom.vars.fontSize end,
-				setFunc=function(value) tom.vars.fontSize=value tom.setFontSize() end,
-				default=tom.tom_defaults.fontSize,
-				},
-			[39] = {
-				type="slider",
-				name=tom.locTxt[68],
-				tooltip=nil,
-				min=0,
-				max=100,
-				step=5,
-				getFunc=function() return tom.vars.BGalpha end,
-				setFunc=function(value) tom.vars.BGalpha=value tom.activateUIchanges() end,
-				default=tom.tom_defaults.BGalpha,
-				},
-			[40]={
-				type="checkbox",
-				name=tom.locTxt[116],
-				tooltip=tom.locTxt[117],
-				getFunc=function() return tom.vars.displayGreeting end,
-				setFunc=function(newValue) tom.vars.displayGreeting=newValue end,
-				default=tom.tom_defaults.displayGreeting,
-				},
-			[41]={
-				type="checkbox",
-				name=tom.locTxt[7],
-				tooltip=tom.locTxt[8],
-				getFunc=function() return tom.vars.moveableWindows end,
-				setFunc=function(newValue) tom.vars.moveableWindows=newValue tom.setMovability(newValue) end,
-				default=tom.tom_defaults.moveableWindows,
-				},
-			[42]={
-				type="checkbox",
-				name=tom.locTxt[143],
-				tooltip=tom.locTxt[144],
-				getFunc=function() return tom.vars.displayOnlineStatus end,
-				setFunc=function(newValue) tom.vars.displayOnlineStatus=newValue tom.onlineStatusChange(0,0,GetPlayerStatus()) end,
-				default=tom.tom_defaults.displayOnlineStatus,
-				},
-			[43]={
-				type="checkbox",
-				name=tom.locTxt[145],
-				tooltip=tom.locTxt[146],
-				getFunc=function() return tom.vars.alerterShown end,
-				setFunc=function(newValue) tom.vars.alerterShown=newValue tom.setAlerterHideStatus(tom.vars.alerterShown) end,
-				default=tom.tom_defaults.alerterShown,
+				[45] = {
+					type="slider",
+					name=tom.locTxt[148],
+					tooltip=tom.locTxt[149],
+					min=12,
+					max=28,
+					step=1,
+					getFunc=function() return tom.vars.fontSize end,
+					setFunc=function(value) tom.vars.fontSize=value tom.setFontSize() end,
+					default=tom.tom_defaults.fontSize,
 				},
 			}
-	local LAM3=LibStub("LibAddonMenu-2.0")
-	LAM3:RegisterAddonPanel("TOMConfig", panelData)
-	LAM3:RegisterOptionControls("TOMConfig", optionsData)
+
+			LAM:RegisterOptionControls("TOMConfig", optionsData)
+		end
+	end
 end
 
 function tom.InitializeUI()
@@ -4308,6 +4334,7 @@ function tom.InitializeUI()
 end
 
 function tom.Initialize(eventCode, addOnName)
+
 	if (addOnName == tom.name) then
 		--	Defaults anlegen
 		tom.tom_defaults = {
@@ -4402,6 +4429,7 @@ function tom.Initialize(eventCode, addOnName)
 			alerterShown=true,
 			fontSize=16,
 		}
+
 		--	Variablen anlegen
 		tom.throttle={}
 		tom.mdt={}
