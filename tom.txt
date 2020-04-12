@@ -1,0 +1,18 @@
+;;
+;; Disclosure
+;;
+;; This Add-on is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates.
+;; The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the United States and/or other countries.
+;; All rights reserved.
+;;
+;;
+## Title: TOM (Tamriel Online Messenger)
+## APIVersion: 100030 100029 100028
+## Version: 4.31
+## SavedVariables: tomvars
+## Author: @Sternentau
+## DependsOn: LibAddonMenu-2.0
+
+tom.lua
+tom.xml
+bindings.xml
